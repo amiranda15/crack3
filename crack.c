@@ -3,14 +3,9 @@
 #include <string.h>
 
 #include "md5.h"
-
-#if __has_include("fileutil.h")
 #include "fileutil.h"
-#endif
 
 #define PASS_LEN 50     // Maximum length any password will be.
-#define HASH_LEN 33     // Length of hash plus one for null.
-
 
 int main(int argc, char *argv[])
 {
@@ -20,29 +15,45 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    // TODO: Read the hashes file into an array.
-    //   Use either a 2D array or an array of arrays.
-    //   Use the loadFile function from fileutil.c
-    //   Uncomment the appropriate statement.
+    // TODO1: Read the hashes file into a 2D array.
     int size;
-    //char (*hashes)[HASH_LEN] = loadFile(argv[1], &size);
-    //char **hashes = loadFile(argv[1], &size);
-    
-    // CHALLENGE1: Sort the hashes using qsort.
-    
-    // TODO
-    // Open the password file for reading.
+    char (*hashes)[HASH_LEN] = loadFile2D(argv[1], &size);
 
-    // TODO
-    // For each password, hash it, then use the array search
-    // function from fileutil.h to find the hash.
-    // If you find it, display the password and the hash.
-    // Keep track of how many hashes were found.
-    // CHALLENGE1: Use binary search instead of linear search.
+    // TODO2: Open the dictionary file for reading.
+    FILE *dict = fopen(argv[2], "r");
+    if (!dict)
+    {
+        perror("Failed to open dictionary file");
+        exit(1);
+    }
 
-    // TODO
-    // When done with the file:
-    //   Close the file
-    //   Display the number of hashes found.
-    //   Free up memory.
+    char line[PASS_LEN];
+    int cracked = 0;
+
+    // TODO3: Loop through each password in the dictionary.
+    while (fgets(line, sizeof(line), dict))
+    {
+        // Remove newline
+        char *nl = strchr(line, '\n');
+        if (nl) *nl = '\0';
+
+        // Hash the password
+        char *hashStr = md5(line, strlen(line));
+
+        //  linear search to see if the hash is in the list
+        if (exactSearch2D(hashStr, hashes, size))
+        {
+            printf("%s => %s\n", hashStr, line);
+            cracked++;
+        }
+
+        free(hashStr);
+    }
+
+    // TODO4: Close file, free memory, print total found
+    fclose(dict);
+    free2D(hashes);
+    printf("Total cracked: %d\n", cracked);
+
+    return 0;
 }
